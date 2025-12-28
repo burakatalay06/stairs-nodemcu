@@ -1,0 +1,46 @@
+############################
+# 🔐 Secrets / Credentials
+############################
+secrets.h
+secret.h
+*.secrets.h
+credentials.h
+
+############################
+# 🧪 Build / Temporary Files
+############################
+*.o
+*.a
+*.elf
+*.bin
+*.hex
+*.map
+
+############################
+# 🛠 Arduino IDE / CLI
+############################
+.build/
+build/
+arduino_build_*
+arduino_cache_*
+
+############################
+# 💻 OS / Editor Artifacts
+############################
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+############################
+# 📦 Libraries (opsiyonel)
+############################
+# Eğer library'leri repo dışı tutmak istiyorsan aç
+# libraries/
+
+############################
+# 📜 Logs
+############################
+*.log
