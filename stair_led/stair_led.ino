@@ -30,6 +30,7 @@ const int ledPins[6] = {D1, D2, D5, D6, D7, D8};
 bool manualStates[6] = {false, false, false, false, false, false};
 bool allLedOverride = false;
 bool autoMode = true;
+bool prevAutoMode = true;
 bool fallback_mode = false;
 
 int dimLevel = 100;   // Kısık yanma (varsayılan)
@@ -41,6 +42,7 @@ int autoEndHour = 23;   // Otomatik bitiş saati
 int currentHour = 0;
 float sinusCounter = 0;
 
+unsigned long now = millis();
 void startOTA() {
   ArduinoOTA.setHostname("esp-led-system");
   ArduinoOTA.onStart([]() {
@@ -168,47 +170,64 @@ void autoLedControl() {
   for (int i = 0; i < 6; i++) {
     if (allLedOverride) {
       writeLED(i, manualStates[5] ? fullLevel : 0);
-    } else {
-      if (autoMode && isAutoActiveNow) {
-        //float angle = sinusCounter + i * 10;
-        //float radians = angle * 3.1416 / 180.0;
-        //float sinValue = (sin(radians) + 1.0) / 2.0;
-        //int pwm = dimLevel + (int)(sinValue * (fullLevel - dimLevel));
-        //writeLED(i, pwm);
-        writeLED(i, 50);
+    } else if (autoMode) {
+      writeLED(i, fullLevel);
+      delay(300);
+      if (i == 5) {
+        for (int j = 0; j < 31; j++) {
+          for (int k = 0; k < 6; k++) {
 
-      } else if(autoMode) {
-        writeLED(i, 0);
-      }else{
-              writeLED(i, dimLevel);
+            if (k % (j % 2 ? 2 : 1) == 0) {
+              writeLED(k, fullLevel);
+            } else {
+              writeLED(k, 0);
+            }
 
+          }
+          delay(300);
+          if (j == 30) {
+            autoMode = false;
+          }
         }
-
+      }
+    } else {
+      writeLED(i, dimLevel);
 
     }
   }
 
-  sinusCounter += 2;
-  if (sinusCounter >= 360) sinusCounter = 0;
 
-  Serial.print("Saat: ");
-  Serial.print(currentHour);
-  Serial.print(" | Mod: ");
-  Serial.print(autoMode ? "Auto" : "Manual");
-  Serial.print(" | Override: ");
-  Serial.println(allLedOverride);
+  //Serial.print("Saat: ");
+  //Serial.print(currentHour);
+  //Serial.print(" | Mod: ");
+  //Serial.print(autoMode ? "Auto" : "Manual");
+  //Serial.print(" | Override: ");
+  //Serial.println(allLedOverride);
 }
 
 void loop() {
-  if (fallback_mode) {
-    for (int i = 0; i < 6; i++) {
-      analogWrite(ledPins[i], fullLevel);
+
+  now = millis();
+  if (now > 30000) {
+
+    if (fallback_mode) {
+      for (int i = 0; i < 6; i++) {
+        analogWrite(ledPins[i], fullLevel);
+      }
+    } else {
+      Blynk.run();
+      if (autoMode != prevAutoMode) {
+        prevAutoMode = autoMode;
+        Blynk.virtualWrite(V7, autoMode);
+      }
+      autoLedControl();
     }
   } else {
-    Blynk.run();
+    analogWrite(ledPins[0], 0);
+
   }
 
+
   ArduinoOTA.handle();
-  autoLedControl();
   delay(100);
 }
